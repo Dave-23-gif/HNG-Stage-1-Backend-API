@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class QueryParser {
@@ -18,14 +20,17 @@ public class QueryParser {
         // GENDER
         // ====================================
 
-        if (q.contains("male")) {
+        if (q.matches(".*\\bmale\\b.*") ||
+                q.matches(".*\\bmales\\b.*")) {
+
             filters.put("gender", "male");
         }
 
-        if (q.contains("female")) {
+        if (q.matches(".*\\bfemale\\b.*") ||
+                q.matches(".*\\bfemales\\b.*")) {
+
             filters.put("gender", "female");
         }
-
         // ====================================
         // YOUNG
         // ====================================
@@ -69,6 +74,18 @@ public class QueryParser {
 
         if (q.contains("angola")) {
             filters.put("countryId", "AO");
+        }
+        Pattern pattern = Pattern.compile("above\\s+(\\d+)");
+        Matcher matcher = pattern.matcher(q);
+
+        if (matcher.find()) {
+            filters.put("minAge",
+                    Integer.parseInt(matcher.group(1)));
+        }
+        if(filters.isEmpty()){
+            throw new RuntimeException(
+                    "Unable to interpret query"
+            );
         }
 
         return filters;

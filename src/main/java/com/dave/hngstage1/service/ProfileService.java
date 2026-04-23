@@ -181,9 +181,10 @@ public class ProfileService {
     ) {
 
         // DEFAULT SORT FIELD
-        if (sortBy == null || sortBy.isBlank()) {
+        if(sortBy.equals("created_at")){
             sortBy = "createdAt";
         }
+
 
         // DEFAULT ORDER
         if (order == null || order.isBlank()) {
@@ -191,6 +192,15 @@ public class ProfileService {
         }
 
         // SORTING
+        List<String> allowedSortFields = List.of(
+                "age",
+                "created_at",
+                "gender_probability"
+        );
+
+        if (!allowedSortFields.contains(sortBy)) {
+            throw new RuntimeException("Invalid query parameters");
+        }
         Sort sort = order.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
@@ -200,7 +210,13 @@ public class ProfileService {
                 page - 1,
                 Math.min(limit, 50),
                 sort
+
         );
+        if(page < 1){
+            page = 1;
+        }
+
+        limit = Math.min(limit, 50);
 
         // DYNAMIC FILTERS
         Specification<Profile> spec = Specification
