@@ -18,7 +18,7 @@ public class ProfileSpecification {
         };
 
     }
-    public static Specification<Profile> hasCountryId(String countryId) {
+    public static Specification<Profile> hasCountry(String countryId) {
         return(root, query, criteriaBuilder) ->{
             //if no country is provided, return all records
             if(countryId==null || countryId.isBlank()){
@@ -32,7 +32,7 @@ public class ProfileSpecification {
         };
 
     }
-    public static Specification<Profile> hasAgeGroup(String ageGroup) {
+    public static Specification<Profile> hasAge(String ageGroup) {
         return(root, query, criteriaBuilder) ->{
             //if no age is provided, return all records
             if(ageGroup==null || ageGroup.isBlank()){

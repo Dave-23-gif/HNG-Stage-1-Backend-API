@@ -25,6 +25,7 @@ public class ProfileService {
     private final NationalizeClient nationalizeClient;
     private final QueryParser queryParser;
 
+
     // =========================================
     // CREATE PROFILE
     // =========================================
@@ -163,72 +164,127 @@ public class ProfileService {
     // =========================================
     // GET ALL PROFILES
     // =========================================
-
     public Page<Profile> getAllProfiles(
 
             String gender,
             String ageGroup,
             String countryId,
+
             Integer minAge,
             Integer maxAge,
+
             Double minGenderProbability,
             Double minCountryProbability,
+
             String sortBy,
             String order,
+
             int page,
             int limit
 
     ) {
 
-        // DEFAULT SORT FIELD
-        if(sortBy.equals("created_at")){
-            sortBy = "createdAt";
+        // DEFAULTS
+
+        if (sortBy == null || sortBy.isBlank()) {
+            sortBy = "created_at";
         }
 
-
-        // DEFAULT ORDER
         if (order == null || order.isBlank()) {
             order = "desc";
         }
 
-        // SORTING
-        List<String> allowedSortFields = List.of(
-                "age",
-                "created_at",
-                "gender_probability"
-        );
+        // VALID SORT FIELDS
 
-        if (!allowedSortFields.contains(sortBy)) {
-            throw new RuntimeException("Invalid query parameters");
+
+        if (
+                !sortBy.equals("age") &&
+                        !sortBy.equals("created_at") &&
+                        !sortBy.equals("gender_probability") &&
+                        !sortBy.equals("createdAt") &&
+                        !sortBy.equals("genderProbability")
+        ) {
+
+            throw new RuntimeException(
+                    "Invalid query parameters"
+            );
         }
-        Sort sort = order.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
 
-        // PAGINATION
-        Pageable pageable = PageRequest.of(
-                page - 1,
-                Math.min(limit, 50),
-                sort
+        // VALID ORDER
 
-        );
-        if(page < 1){
+        if (
+                !order.equalsIgnoreCase("asc") &&
+                        !order.equalsIgnoreCase("desc")
+        ) {
+
+            throw new RuntimeException(
+                    "Invalid query parameters"
+            );
+        }
+
+        // ENTITY FIELD MAPPING
+
+        if (sortBy.equals("created_at")) {
+            sortBy = "createdAt";
+        }
+
+        if (sortBy.equals("gender_probability")) {
+            sortBy = "genderProbability";
+        }
+
+        // LIMIT MAX 50
+
+        if (limit > 50) {
+            limit = 50;
+        }
+
+        // PAGE MINIMUM
+
+        if (page < 1) {
             page = 1;
         }
 
-        limit = Math.min(limit, 50);
+        // SORTING
 
-        // DYNAMIC FILTERS
-        Specification<Profile> spec = Specification
-                .where(ProfileSpecification.hasGender(gender))
-                .and(ProfileSpecification.hasAgeGroup(ageGroup))
-                .and(ProfileSpecification.hasCountryId(countryId))
-                .and(ProfileSpecification.hasMinAge(minAge))
-                .and(ProfileSpecification.hasMaxAge(maxAge))
-                .and(ProfileSpecification.hasMinGenderProbability(minGenderProbability))
-                .and(ProfileSpecification.hasMinCountryProbability(minCountryProbability));
+        Sort sort;
 
-        // DATABASE QUERY
+        if (order.equalsIgnoreCase("asc")) {
+            sort = Sort.by(sortBy).ascending();
+        } else {
+            sort = Sort.by(sortBy).descending();
+        }
+
+        Pageable pageable =
+                PageRequest.of(page - 1, limit, sort);
+
+        // SPECIFICATIONS
+
+        Specification<Profile> spec =
+
+                ProfileSpecification.hasGender(gender)
+
+                        .and(ProfileSpecification.hasAge(ageGroup))
+
+                        .and(ProfileSpecification.hasCountry(countryId))
+
+                        .and(ProfileSpecification.hasMinAge(minAge))
+
+                        .and(ProfileSpecification.hasMaxAge(maxAge))
+
+                        .and(
+                                ProfileSpecification
+                                        .hasMinGenderProbability(
+                                                minGenderProbability
+                                        )
+                        )
+
+                        .and(
+                                ProfileSpecification
+                                        .hasMinCountryProbability(
+                                                minCountryProbability
+                                        )
+                        );
+
         return profileRepository.findAll(spec, pageable);
     }
 
